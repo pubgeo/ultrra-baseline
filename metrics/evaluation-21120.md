@@ -1,0 +1,7 @@
+<h3>Metric Evaluation</h3>
+<p>During the development phase, both camera calibration and view synthesis tasks will be evaluated using images from the same scene. Reference values for both tasks are provided in the development data package, allowing participants to  independently experiment and self-evaluate and also confirm that submissions to the leaderboard are formatted correctly.
+During the test phase, camera calibration and view synthesis tasks will be evaluated using images from different scenes, and all reference values will be sequestered.</p>
+<h4>Camera calibration task:</h4>
+<p>Inputs are unposed JPG images, and outputs are relative camera poses in a JSON file format. Camera poses are evaluated by comparing relative camera locations, with contestant coordinate frames aligned to sequestered reference world coordinates using Procrustes analysis. The leaderboard metric for this task is SE90, the 90th percentile spherical error from all input images.</p>
+<h4>View synthesis task:</h4>
+<p>Inputs are posed images for training a view synthesis model and test poses for rendering novel views. Sequestered images and contestant rendered images will be compared using the single-model variant of the <a href="https://dreamsim-nights.github.io/">DreamSim image similarity metric</a>. The leaderboard metric for this task is the mean DreamSim score from all rendered images.</p>

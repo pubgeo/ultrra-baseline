@@ -1,0 +1,3 @@
+<h3>Terms and Conditions</h3>
+<p>By participating in this challenge, you consent to publicly share your submissions.</p>
+<p>No prizes will be awarded. Organizers will review submissions and invite top-scoring participants to submit a brief writeup of their solutions, documenting their approaches and observations. Organizers will then select from among the best scores and writeups and invite participants to present their results at the <a href="https://sites.google.com/view/ultrra-wacv-2025">ULTRRA workshop</a> at <a href="https://wacv2025.thecvf.com/">WACV 2025</a>. Virtual presentations will be supported. All top-scoring participants on the leaderboard will be acknowledged at the workshop.</p>

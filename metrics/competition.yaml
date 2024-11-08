@@ -1,27 +1,49 @@
-title: WRIVA Public Challenge STRESS TEST
-description: Public challenge for multi-altitude camera calibration and view synthesis
+version: '2'
+title: ULTRRA Challenge 2025
+description: The ULTRRA challenge evaluates current and novel state of the art view
+  synthesis methods for posed and unposed cameras. Challenge datasets emphasize real-world
+  considerations, such as image sparsity, variety of camera models, and unconstrained acquisition in real-world environments.
 image: competition_logo.jpg
 has_registration: False
 docker_image: "jkcarney/dsim-test"
 
-html: 
-    overview: overview.html
-    evaluation: evaluation.html
-    terms: terms.html
-    data: data.html
-    get_starting_kit: get_starting_kit.html
-    Acknowledgements: Acknowledgements.html
+pages:
+- title: Overview
+  file: overview-21124.md
+- title: Evaluation
+  file: evaluation-21120.md
+- title: Data
+  file: data-21121.md
+- title: Acknowledgements
+  file: acknowledgements-21122.md
+
+tasks:
+- index: 0
+  name: Development Task
+  description: Test for WRIVA public challenge...
+  is_public: false
+  reference_data: ultrra25-dev-ref.zip
+  scoring_program: program.zip
+solutions: []
 phases:
-    1:
-        phasenumber: 1
-        label: "Development"
-        start_date: 2024-11-08
-        scoring_program: program.zip
-        reference_data: reference.zip
-        starting_kit: starting_kit.zip
-        execution_time_limit: 3600
-        max_submissions_per_day: 15
-        description: Test for WRIVA public challenge...
+- index: 0
+  name: Development
+  description: During the development phase, both camera calibration and view synthesis
+    tasks will be evaluated using images from the same scene. Reference values for
+    both tasks are provided in the development data package, allowing participants
+    to  independently experiment and self-evaluate and also confirm that submissions
+    to the leaderboard are formatted correctly.
+  start: '2024-11-08'
+  end: '2025-01-09'
+  max_submissions_per_day: 10
+  max_submissions: 1000
+  execution_time_limit: 3600
+  auto_migrate_to_this_phase: false
+  hide_output: false
+  tasks:
+  - 0
+  solutions: []
+  
 leaderboard:
     leaderboards:
         RESULTS: &RESULTS
