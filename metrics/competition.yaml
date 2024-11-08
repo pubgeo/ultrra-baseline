@@ -1,0 +1,78 @@
+title: WRIVA Public Challenge STRESS TEST
+description: Public challenge for multi-altitude camera calibration and view synthesis
+image: competition_logo.jpg
+has_registration: False
+docker_image: "jkcarney/dsim-test"
+
+html: 
+    overview: overview.html
+    evaluation: evaluation.html
+    terms: terms.html
+    data: data.html
+    get_starting_kit: get_starting_kit.html
+    Acknowledgements: Acknowledgements.html
+phases:
+    1:
+        phasenumber: 1
+        label: "Development"
+        start_date: 2024-11-08
+        scoring_program: program.zip
+        reference_data: reference.zip
+        starting_kit: starting_kit.zip
+        execution_time_limit: 3600
+        max_submissions_per_day: 15
+        description: Test for WRIVA public challenge...
+leaderboard:
+    leaderboards:
+        RESULTS: &RESULTS
+            label: RESULTS
+            rank: 1
+    columns:
+        t01_dreamsim:
+            leaderboard: *RESULTS
+            label: t01_dreamsim
+            rank: 1
+            numeric_format: 2
+            sorting: desc
+        t01_se90:
+            leaderboard: *RESULTS
+            label: t01_se90
+            rank: 2
+            numeric_format: 2
+            sorting: desc
+        t02_dreamsim:
+            leaderboard: *RESULTS
+            label: t02_dreamsim
+            rank: 3
+            numeric_format: 2
+            sorting: desc
+        t02_se90:
+            leaderboard: *RESULTS
+            label: t02_se90
+            rank: 4
+            numeric_format: 2
+            sorting: desc
+        t03_dreamsim:
+            leaderboard: *RESULTS
+            label: t03_dreamsim
+            rank: 5
+            numeric_format: 2
+            sorting: desc
+        t03_se90:
+            leaderboard: *RESULTS
+            label: t03_se90
+            rank: 6
+            numeric_format: 2
+            sorting: desc
+        t04_dreamsim:
+            leaderboard: *RESULTS
+            label: t04_dreamsim
+            rank: 7
+            numeric_format: 2
+            sorting: desc
+        t04_se90:
+            leaderboard: *RESULTS
+            label: t04_se90
+            rank: 8
+            numeric_format: 2
+            sorting: desc
