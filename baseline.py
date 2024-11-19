@@ -30,13 +30,13 @@ INTERPOLATION_STEPS = 60
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--root_datasets_dir", type=Path, required=False, help="path to root dir for WACV datasets (should have 'input', 'ref', and 'res' dirs)"
+        "--root_datasets_dir", type=Path, required=False, help="path to root dir for ULTRRA datasets (should have 'input' and 'ref' dirs. A 'res' dir will be created here if not already existing)"
     )
     parser.add_argument(
         '--stage', type=str, required=False, help="stage of the contest to run for ('camera_calibration' or 'view_synthesis')"
     )
     parser.add_argument(
-        "--dataset_name", type=Path, required=False, help="name WACV dataset"
+        "--dataset_name", type=Path, required=False, help="name of ULTRRA dataset"
     )
     parser.add_argument(
         "--cuda_visible_devices", type=str, required=False, default="0", help="device number of GPU to use for nerfstudio training and rendering"
