@@ -460,6 +460,43 @@ def detect_model_format(path, ext):
     return False
 
 
+# replace image names in model, and output both ascii and bin
+def replace_imagename_in_model(path, mapping):
+    images = read_images_binary(os.path.join(path, "images.bin"))
+    # We do that only if the mapping changes the name
+    # if the filename has been changed already, we will get an exception and quit overwriting.
+    try:
+        new_images = {}
+        for key in images:
+            new_images[key]=Image(
+                        id=images[key].id,
+                        qvec=images[key].qvec,
+                        tvec=images[key].tvec,
+                        camera_id=images[key].camera_id,
+                        name=mapping[images[key].name],
+                        xys=images[key].xys,
+                        point3D_ids=images[key].point3D_ids,
+                    )
+        write_images_binary(new_images, os.path.join(path, "images.bin" ))
+        write_images_text(new_images, os.path.join(path, "images.txt" ))
+        # backup
+        write_images_binary(images, os.path.join(path, "images_old.bin" ))
+    except:
+        return
+    return 
+
+
+# rename images in folder
+def rename_images(arb_colmap_dir, mapping):
+    for dirpath, dirnames, filenames in os.walk(arb_colmap_dir):
+        for filename in filenames:
+            if filename in mapping.keys():
+                old_path = os.path.join(dirpath, filename)
+                new_path = os.path.join(dirpath, mapping[filename])
+                os.rename(old_path, new_path)
+                print(f"Renamed: {old_path} to {new_path}")
+
+
 def read_model(path, ext=""):
     # try to detect the extension automatically
     if ext == "":
