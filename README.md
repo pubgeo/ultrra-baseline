@@ -29,7 +29,7 @@ submission/
 │  ├─ .../
 ```
 - The `view_synthesis/` and `camera_calibration` folders represent the separate tracks
-- Within these folders are the separate dataset names for each dataset (for example, `t01_v09_s00_r01_ImageDensity_WACV_dev_A01`)
+- Within these folders are the separate dataset names for each track (for example, `t01_v09_s00_r01_ImageDensity_WACV_dev_A01`)
 - Within the folders for each dataset name are your respective submission files. For `camera_calibration/` these will be JSONs. For `view_synthesis/`, these will be JPGs. 
 - **When submitting to Codabench, DO NOT zip a high level folder containing the `view_synthesis/` and `camera_calibration/` folders. Zip each folder individually, otherwise the scoring program will error.** For example:
     - **CORRECT:** `zip -r my-submission.zip view_synthesis/ camera_calibration/`
