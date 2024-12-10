@@ -1,4 +1,4 @@
-PROGRAM_FILES := evaluate.py metadata
+PROGRAM_FILES := evaluate.py projections.py procrustes.py metadata
 PROGRAM_ZIP := program.zip 
 TOP_ZIP := wriva-codabench-competition.zip      # Name of the top-level zip file
 DIR_ZIPS := $(DIRS:%=%.zip)   # Create a list of zip files for the directories
