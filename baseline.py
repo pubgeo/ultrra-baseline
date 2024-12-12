@@ -40,13 +40,16 @@ from hloc import (
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--root_datasets_dir", type=Path, required=False, help="path to root dir for WACV datasets (should have 'input', 'ref', and 'res' dirs)"
+        "--root_datasets_dir", type=Path, required=False, help="path to root dir for datasets (should include 'input', outputs)"
     )
     parser.add_argument(
         '--stage', type=str, required=False, help="stage of the contest to run for ('camera_calibration' or 'view_synthesis')"
     )
     parser.add_argument(
-        "--dataset_name", type=Path, required=False, help="name WACV dataset"
+        "--dataset_name", type=Path, required=False, help="input dataset name"
+    )
+    parser.add_argument(
+        "--output_name", type=str, default="res", required=False, help="default is 'res'"
     )
     parser.add_argument(
         "--cuda_visible_devices", type=str, required=False, default="0", help="device number of GPU to use for nerfstudio training and rendering"
@@ -68,12 +71,9 @@ def main():
     # validate/setup dataset dirs
     inputs_dir = args.root_datasets_dir / 'inputs' / args.stage / args.dataset_name
     assert inputs_dir.exists(), f"No inputs dir found at: {inputs_dir}"
-    ref_dir = args.root_datasets_dir / 'ref' / args.stage / args.dataset_name
-    assert ref_dir.exists(), f"No ref dir found at: {ref_dir}"
 
-    res_dir = args.root_datasets_dir / 'res_homer' / args.stage / args.dataset_name
+    res_dir = args.root_datasets_dir / args.output_name / args.stage / args.dataset_name
     res_dir.mkdir(exist_ok=True, parents=True)
-
     
     # setup temporary dir for run, to run COLMAP, nerfstudio, etc. and store intermediate outputs along the pipeline
     run_dir = Path(f"./temp_run_dir_{args.dataset_name}_{args.stage}")
@@ -84,7 +84,7 @@ def main():
     # run arbitrary colmap
     train_images_dir = inputs_dir if str(args.stage) == 'camera_calibration' else inputs_dir / 'train'
     arb_colmap_dir = run_dir / 'arb_colmap'
-    img_cource = arb_colmap_dir / 'images'
+    img_source = arb_colmap_dir / 'images'
     
     if not arb_colmap_dir.exists():
         outputs = arb_colmap_dir / Path("colmap/")
@@ -108,14 +108,14 @@ def main():
             min_match_score = 0.1,skip_geometric_verification=False)
         cameras, images, points3D = read_model(arb_colmap_dir / "colmap" / "sparse" / "0", ext=".bin")
         write_model(cameras, images, points3D, arb_colmap_dir / "colmap" / "sparse" / "0", ext=".txt")
-        if not img_cource.exists():
-            os.makedirs(img_cource)
+        if not img_source.exists():
+            os.makedirs(img_source)
         
         for basename in os.listdir(train_images_dir):
             if basename.endswith('.jpg'):
                 pathname = train_images_dir / basename
                 if os.path.isfile(pathname):
-                    shutil.copy2(pathname, img_cource)
+                    shutil.copy2(pathname, img_source)
 
 
     arb_model_root = arb_colmap_dir / "colmap" / "sparse" / "0" / "models"  
