@@ -40,13 +40,16 @@ import pycolmap
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--root_datasets_dir", type=Path, required=False, help="path to root dir for WACV datasets (should have 'input', 'ref', and 'res' dirs)"
+        "--root_dataset_dir", type=Path, required=False, help="path to root dir for datasets (should have 'input' dir inside)"
     )
     parser.add_argument(
         '--stage', type=str, required=False, help="stage of the contest to run for ('camera_calibration' or 'view_synthesis')"
     )
     parser.add_argument(
-        "--dataset_name", type=Path, required=False, help="name WACV dataset"
+        "--dataset_name", type=Path, required=False, help="input dataset name"
+    )
+    parser.add_argument(
+        "--output_name", type=str, default="res", required=False, help="default is 'res'"
     )
     parser.add_argument(
         "--cuda_visible_devices", type=str, required=False, default="0", help="device number of GPU to use for nerfstudio training and rendering"
@@ -58,30 +61,7 @@ def main():
         "--method_to_use", type=str, required=False, default="splatfacto", help="which nerfacto model to use for 'view_synthesis' stage (ex: 'nerfacto', 'splatfacto', etc)"
     )
     args = parser.parse_args()
-    # args.stage = Path(f'view_synthesis')
-    # args.root_datasets_dir = Path(f'/media/wriva/Data/WACV25/dev_phase/dev_contest_datasets_final/')
-    # args.root_datasets_dir = Path(f'/media/wriva/Data/WACV25/test_phase/test_contest_datasets')
-    # args.root_datasets_dir = Path(f'/media/wriva/Data/WACV25/dev_phase/dev_contest_datasets_241207/')
-    # args.root_datasets_dir = Path(f'/media/wriva/Data/WACV25/test_phase/test_contest_datasets_241207/')
-    
-    # args.dataset_name = Path(f't02_v06_s00_r01_CameraModels_WACV_dev_A01')
-    # args.dataset_name = Path(f't01_v09_s00_r01_ImageDensity_WACV_dev_A01')
-    # args.dataset_name = Path(f't03_v06_s00_r01_ReconstructedArea_WACV_dev_A01')
-    # args.dataset_name = Path(f't04_v11_s00_r01_VaryingAltitudes_WACV_dev_A01')
-    
-    # args.dataset_name = Path(f't01_v10_s00_r01_ImageDensity_WACV_test_A09')
-    # args.dataset_name = Path(f't02_v07_s00_r01_CameraModels_WACV_test_A09')
-    # args.dataset_name = Path(f't03_v07_s00_r01_ReconstructedArea_WACV_test_A09')
-    # args.dataset_name = Path(f't04_v12_s00_r01_VaryingAltitudes_WACV_test_A09')
-    
-    # args.dataset_name = Path(f't04_v12_s00_r01_VaryingAltitudes_WACV_test_A09')
-    
-    
-    # args.dataset_name = Path(f't01_v09_s00_r01_ImageDensity_WACV_dev_A01')
-    
-    
-    hack_cam_location = False
-    tmp_image_folder = Path(f'~/ultrra-baseline/images') / args.dataset_name 
+#    tmp_image_folder = Path(f'~/ultrra-baseline/images') / args.dataset_name 
     assert args.method_to_use == 'splatfacto', "Still working on testing other nerfstudio methods. Please use splatfacto only for now."
 
     start_time = time.time()
@@ -89,14 +69,9 @@ def main():
     # validate/setup dataset dirs
     inputs_dir = args.root_datasets_dir / 'inputs' / args.stage / args.dataset_name
     assert inputs_dir.exists(), f"No inputs dir found at: {inputs_dir}"
-    ref_dir = args.root_datasets_dir / 'ref' / args.stage / args.dataset_name
-    assert ref_dir.exists(), f"No ref dir found at: {ref_dir}"
-    if hack_cam_location:
-        res_dir = args.root_datasets_dir / 'res_homer_hack' / args.stage / args.dataset_name
-    else:
-        res_dir = args.root_datasets_dir / 'res_homer' / args.stage / args.dataset_name
-    res_dir.mkdir(exist_ok=True, parents=True)
 
+    res_dir = args.root_datasets_dir / output_name / args.stage / args.dataset_name
+    res_dir.mkdir(exist_ok=True, parents=True)
     
     # setup temporary dir for run, to run COLMAP, nerfstudio, etc. and store intermediate outputs along the pipeline
     run_dir = Path(f"./temp_run_dir_{args.dataset_name}_{args.stage}")
@@ -108,7 +83,7 @@ def main():
     train_images_dir = inputs_dir if str(args.stage) == 'camera_calibration' else inputs_dir / 'train'
     train_images_dir = inputs_dir if str(args.stage) == 'camera_calibration' else inputs_dir / 'train'
     arb_colmap_dir = run_dir / 'arb_colmap'
-    img_cource = arb_colmap_dir / 'images'
+    img_source = arb_colmap_dir / 'images'
     
     if not arb_colmap_dir.exists():
         outputs = arb_colmap_dir / Path("colmap/")
@@ -132,14 +107,14 @@ def main():
             min_match_score = 0.1,skip_geometric_verification=False)
         cameras, images, points3D = read_model(arb_colmap_dir / "colmap" / "sparse" / "0", ext=".bin")
         write_model(cameras, images, points3D, arb_colmap_dir / "colmap" / "sparse" / "0", ext=".txt")
-        if not img_cource.exists():
-            os.makedirs(img_cource)
+        if not img_source.exists():
+            os.makedirs(img_source)
         
         for basename in os.listdir(train_images_dir):
             if basename.endswith('.jpg'):
                 pathname = train_images_dir / basename
                 if os.path.isfile(pathname):
-                    shutil.copy2(pathname, img_cource)
+                    shutil.copy2(pathname, img_source)
 
         
     # if not arb_colmap_dir.exists():
@@ -158,7 +133,7 @@ def main():
     allowed_exts = [".jpg", ".jpeg", ".png", ".tif", ".tiff"] 
     glob_str =  "[!.]*"
     org_files = sorted([os.path.basename(p) for p in train_images_dir.glob(glob_str) if p.suffix.lower() in allowed_exts])
-    new_files = sorted([os.path.basename(p) for p in img_cource.glob('frame*.*')])
+    new_files = sorted([os.path.basename(p) for p in img_source.glob('frame*.*')])
     
     arb_model_root = arb_colmap_dir / "colmap" / "sparse" / "0" / "models"  
     # this part is not required anymore, leave it here just in case
