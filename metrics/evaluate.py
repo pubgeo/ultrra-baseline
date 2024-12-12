@@ -125,7 +125,7 @@ def evaluate_camera_calibration(submission_path, reference_path):
     # Convert submission coordinates to world coordinates
     submission_coordinates = transform["scale"] * submission_coordinates @ transform["rotation"] + transform["translation"]
     
-    rmses = np.sqrt(((reference_coordinates - submission_coordinates) ** 2).mean(axis=1))
+    rmses = np.sqrt(((reference_coordinates - submission_coordinates) ** 2).sum(axis=1))
     return rmses
 
 

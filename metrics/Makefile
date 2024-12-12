@@ -1,6 +1,5 @@
-DIRS := reference starting_kit       # List the folders you want to zip
-PROGRAM_FILES := evaluate.py metadata
-PROGRAM_ZIP := program.zip
+PROGRAM_FILES := evaluate.py projections.py procrustes.py metadata
+PROGRAM_ZIP := program.zip 
 TOP_ZIP := wriva-codabench-competition.zip      # Name of the top-level zip file
 DIR_ZIPS := $(DIRS:%=%.zip)   # Create a list of zip files for the directories
 
@@ -19,7 +18,7 @@ $(PROGRAM_ZIP): $(PROGRAM_FILES)
 # Rule to zip everything in the directory, including the created zip files
 $(TOP_ZIP): $(DIR_ZIPS) $(PROGRAM_ZIP)
 	@echo "Zipping all files into $(TOP_ZIP)..."
-	zip -r $(TOP_ZIP) *.html *.py *.jpg metadata *.yaml $(DIR_ZIPS) $(PROGRAM_ZIP)
+	zip -r $(TOP_ZIP) *.md *.py *.jpg metadata *.yaml ultrra25-dev-ref-full.zip $(DIR_ZIPS) $(PROGRAM_ZIP)
 
 # Clean up all zip files
 clean:

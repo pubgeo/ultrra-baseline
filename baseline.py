@@ -44,6 +44,7 @@ def main():
     )
     parser.add_argument(
         '--stage', type=str, required=False, help="stage of the contest to run for ('camera_calibration' or 'view_synthesis')"
+        '--stage', type=str, required=False, help="stage of the contest to run for ('camera_calibration' or 'view_synthesis')"
     )
     parser.add_argument(
         "--dataset_name", type=Path, required=False, help="name WACV dataset"
@@ -105,6 +106,7 @@ def main():
     run_dir.mkdir(parents=True, exist_ok=True)
     
     # run arbitrary colmap
+    train_images_dir = inputs_dir if str(args.stage) == 'camera_calibration' else inputs_dir / 'train'
     train_images_dir = inputs_dir if str(args.stage) == 'camera_calibration' else inputs_dir / 'train'
     arb_colmap_dir = run_dir / 'arb_colmap'
     img_cource = arb_colmap_dir / 'images'

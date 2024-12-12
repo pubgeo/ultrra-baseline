@@ -6,6 +6,7 @@ description: The ULTRRA challenge evaluates current and novel state of the art v
 image: competition_logo.jpg
 has_registration: False
 docker_image: "jkcarney/dsim-test"
+terms: terms.md
 
 pages:
 - title: Overview
@@ -22,7 +23,7 @@ tasks:
   name: Development Task
   description: Test for WRIVA public challenge...
   is_public: false
-  reference_data: ultrra25-dev-ref.zip
+  reference_data: ultrra25-dev-ref-full.zip
   scoring_program: program.zip
 solutions: []
 phases:
@@ -44,57 +45,59 @@ phases:
   - 0
   solutions: []
   
-leaderboard:
-    leaderboards:
-        RESULTS: &RESULTS
-            label: RESULTS
-            rank: 1
-    columns:
-        t01_dreamsim:
-            leaderboard: *RESULTS
-            label: t01_dreamsim
-            rank: 1
-            numeric_format: 2
-            sorting: desc
-        t01_se90:
-            leaderboard: *RESULTS
-            label: t01_se90
-            rank: 2
-            numeric_format: 2
-            sorting: desc
-        t02_dreamsim:
-            leaderboard: *RESULTS
-            label: t02_dreamsim
-            rank: 3
-            numeric_format: 2
-            sorting: desc
-        t02_se90:
-            leaderboard: *RESULTS
-            label: t02_se90
-            rank: 4
-            numeric_format: 2
-            sorting: desc
-        t03_dreamsim:
-            leaderboard: *RESULTS
-            label: t03_dreamsim
-            rank: 5
-            numeric_format: 2
-            sorting: desc
-        t03_se90:
-            leaderboard: *RESULTS
-            label: t03_se90
-            rank: 6
-            numeric_format: 2
-            sorting: desc
-        t04_dreamsim:
-            leaderboard: *RESULTS
-            label: t04_dreamsim
-            rank: 7
-            numeric_format: 2
-            sorting: desc
-        t04_se90:
-            leaderboard: *RESULTS
-            label: t04_se90
-            rank: 8
-            numeric_format: 2
-            sorting: desc
+leaderboards:
+- index: 0
+  title: RESULTS
+  key: RESULTS
+  hidden: false
+  submission_rule: Add
+  columns:
+  - title: t01_dreamsim
+    key: t01_dreamsim
+    index: 0
+    sorting: desc
+    hidden: false
+    precision: 2
+  - title: t01_se90
+    key: t01_se90
+    index: 1
+    sorting: desc
+    hidden: false
+    precision: 2
+  - title: t02_dreamsim
+    key: t02_dreamsim
+    index: 2
+    sorting: desc
+    hidden: false
+    precision: 2
+  - title: t02_se90
+    key: t02_se90
+    index: 3
+    sorting: desc
+    hidden: false
+    precision: 2
+  - title: t03_dreamsim
+    key: t03_dreamsim
+    index: 4
+    sorting: desc
+    hidden: false
+    precision: 2
+  - title: t03_se90
+    key: t03_se90
+    index: 5
+    sorting: desc
+    hidden: false
+    precision: 2
+  - title: t04_dreamsim
+    key: t04_dreamsim
+    index: 6
+    sorting: desc
+    hidden: false
+    precision: 2
+  - title: t04_se90
+    key: t04_se90
+    index: 7
+    sorting: desc
+    hidden: false
+    precision: 2
+
