@@ -40,7 +40,7 @@ import pycolmap
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--root_dataset_dir", type=Path, required=False, help="path to root dir for datasets (should have 'input' dir inside)"
+        "--root_datasets_dir", type=Path, required=False, help="path to root dir for datasets (should include 'input', outputs)"
     )
     parser.add_argument(
         '--stage', type=str, required=False, help="stage of the contest to run for ('camera_calibration' or 'view_synthesis')"
