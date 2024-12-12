@@ -1,11 +1,5 @@
 #!/bin/bash
 
-# Change to the directory containing the Python script
-cd /home/lig1
-
-# Change to the directory containing the Python script
-conda activate nerfstudio
-
 ## Run the Python script
 python3 ultrra-baseline/baseline.py --stage camera_calibration \
     --root_datasets_dir /media/wriva/Data/WACV25/dev_phase/dev_contest_datasets_241211/ \

@@ -3,8 +3,8 @@
 # Change to the directory containing the Python script
 cd /home/lig1
 
-# Change to the directory containing the Python script
-conda activate nerfstudio
+# # Change to the directory containing the Python script
+# conda activate nerfstudio
 
 ## Run the Python script
 python3 ultrra-baseline/baseline.py --stage view_synthesis \

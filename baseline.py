@@ -35,7 +35,7 @@ from hloc import (
     visualization,
     pairs_from_exhaustive,
 )
-import pycolmap
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -43,7 +43,6 @@ def main():
         "--root_datasets_dir", type=Path, required=False, help="path to root dir for WACV datasets (should have 'input', 'ref', and 'res' dirs)"
     )
     parser.add_argument(
-        '--stage', type=str, required=False, help="stage of the contest to run for ('camera_calibration' or 'view_synthesis')"
         '--stage', type=str, required=False, help="stage of the contest to run for ('camera_calibration' or 'view_synthesis')"
     )
     parser.add_argument(
@@ -59,30 +58,9 @@ def main():
         "--method_to_use", type=str, required=False, default="splatfacto", help="which nerfacto model to use for 'view_synthesis' stage (ex: 'nerfacto', 'splatfacto', etc)"
     )
     args = parser.parse_args()
-    # args.stage = Path(f'view_synthesis')
-    # args.root_datasets_dir = Path(f'/media/wriva/Data/WACV25/dev_phase/dev_contest_datasets_final/')
-    # args.root_datasets_dir = Path(f'/media/wriva/Data/WACV25/test_phase/test_contest_datasets')
-    # args.root_datasets_dir = Path(f'/media/wriva/Data/WACV25/dev_phase/dev_contest_datasets_241207/')
-    # args.root_datasets_dir = Path(f'/media/wriva/Data/WACV25/test_phase/test_contest_datasets_241207/')
-    
-    # args.dataset_name = Path(f't02_v06_s00_r01_CameraModels_WACV_dev_A01')
-    # args.dataset_name = Path(f't01_v09_s00_r01_ImageDensity_WACV_dev_A01')
-    # args.dataset_name = Path(f't03_v06_s00_r01_ReconstructedArea_WACV_dev_A01')
-    # args.dataset_name = Path(f't04_v11_s00_r01_VaryingAltitudes_WACV_dev_A01')
-    
-    # args.dataset_name = Path(f't01_v10_s00_r01_ImageDensity_WACV_test_A09')
-    # args.dataset_name = Path(f't02_v07_s00_r01_CameraModels_WACV_test_A09')
-    # args.dataset_name = Path(f't03_v07_s00_r01_ReconstructedArea_WACV_test_A09')
-    # args.dataset_name = Path(f't04_v12_s00_r01_VaryingAltitudes_WACV_test_A09')
-    
-    # args.dataset_name = Path(f't04_v12_s00_r01_VaryingAltitudes_WACV_test_A09')
+
     
     
-    # args.dataset_name = Path(f't01_v09_s00_r01_ImageDensity_WACV_dev_A01')
-    
-    
-    hack_cam_location = False
-    tmp_image_folder = Path(f'~/ultrra-baseline/images') / args.dataset_name 
     assert args.method_to_use == 'splatfacto', "Still working on testing other nerfstudio methods. Please use splatfacto only for now."
 
     start_time = time.time()
@@ -92,10 +70,8 @@ def main():
     assert inputs_dir.exists(), f"No inputs dir found at: {inputs_dir}"
     ref_dir = args.root_datasets_dir / 'ref' / args.stage / args.dataset_name
     assert ref_dir.exists(), f"No ref dir found at: {ref_dir}"
-    if hack_cam_location:
-        res_dir = args.root_datasets_dir / 'res_homer_hack' / args.stage / args.dataset_name
-    else:
-        res_dir = args.root_datasets_dir / 'res_homer' / args.stage / args.dataset_name
+
+    res_dir = args.root_datasets_dir / 'res_homer' / args.stage / args.dataset_name
     res_dir.mkdir(exist_ok=True, parents=True)
 
     
@@ -106,7 +82,6 @@ def main():
     run_dir.mkdir(parents=True, exist_ok=True)
     
     # run arbitrary colmap
-    train_images_dir = inputs_dir if str(args.stage) == 'camera_calibration' else inputs_dir / 'train'
     train_images_dir = inputs_dir if str(args.stage) == 'camera_calibration' else inputs_dir / 'train'
     arb_colmap_dir = run_dir / 'arb_colmap'
     img_cource = arb_colmap_dir / 'images'
@@ -142,37 +117,8 @@ def main():
                 if os.path.isfile(pathname):
                     shutil.copy2(pathname, img_cource)
 
-        
-    # if not arb_colmap_dir.exists():
-    #     # os.system(f"ns-process-data images --data {train_images_dir} --output-dir {arb_colmap_dir}  --matching-method {args.colmap_matching_method} \
-    #     #     --skip_image_processing --sfm-tool hloc --feature-type superpoint_aachen --matcher-type superglue\
-    #     #     --no-same-dimensions --no-use-single-camera-mode")
-    #     os.system(f"ns-process-data images --data {train_images_dir} --output-dir {arb_colmap_dir}  --matching-method {args.colmap_matching_method} \
-    #         --sfm-tool hloc --feature-type superpoint_max --matcher-type superglue  --use-sfm-depth --refine-intrinsics --camera-type perspective\
-    #         --no-same-dimensions --no-use-single-camera-mode")
-        
-    # one of the prob with nerfstudio is the renaming process during copying images. However, we still want to keep the original image names
-    # the solution is to figure out the mapping between the original and the new names
-    print('create image mapping')
 
-    # the original name list
-    allowed_exts = [".jpg", ".jpeg", ".png", ".tif", ".tiff"] 
-    glob_str =  "[!.]*"
-    org_files = sorted([os.path.basename(p) for p in train_images_dir.glob(glob_str) if p.suffix.lower() in allowed_exts])
-    new_files = sorted([os.path.basename(p) for p in img_cource.glob('frame*.*')])
-    
     arb_model_root = arb_colmap_dir / "colmap" / "sparse" / "0" / "models"  
-    # this part is not required anymore, leave it here just in case
-    if len(org_files)==len(new_files): # we do mapping only the first time when frame_* exists
-        mapping = {}
-        for new_file,org_file in zip(new_files,org_files):
-            mapping[new_file] = org_file
-        
-        for dir in arb_model_root.iterdir():
-            if dir.is_dir():
-                replace_imagename_in_model(dir,mapping)
-        replace_imagename_in_model(arb_colmap_dir / "colmap" / "sparse" / "0",mapping)
-        rename_images(arb_colmap_dir,mapping)
     
     #read multiple models    
     arb_colmap_models = []
