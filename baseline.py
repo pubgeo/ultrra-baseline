@@ -44,7 +44,6 @@ def main():
     )
     parser.add_argument(
         '--stage', type=str, required=False, help="stage of the contest to run for ('camera_calibration' or 'view_synthesis')"
-        '--stage', type=str, required=False, help="stage of the contest to run for ('camera_calibration' or 'view_synthesis')"
     )
     parser.add_argument(
         "--dataset_name", type=Path, required=False, help="name WACV dataset"
