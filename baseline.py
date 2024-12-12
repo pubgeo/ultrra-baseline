@@ -70,7 +70,7 @@ def main():
     inputs_dir = args.root_datasets_dir / 'inputs' / args.stage / args.dataset_name
     assert inputs_dir.exists(), f"No inputs dir found at: {inputs_dir}"
 
-    res_dir = args.root_datasets_dir / output_name / args.stage / args.dataset_name
+    res_dir = args.root_datasets_dir / args.output_name / args.stage / args.dataset_name
     res_dir.mkdir(exist_ok=True, parents=True)
     
     # setup temporary dir for run, to run COLMAP, nerfstudio, etc. and store intermediate outputs along the pipeline
