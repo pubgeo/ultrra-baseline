@@ -1,10 +1,14 @@
-# Installation
+# Setup
 - Follow instructions [here](https://github.com/nerfstudio-project/nerfstudio?tab=readme-ov-file#1-installation-setup-the-environment) to setup environment and install nerfstudio (this baseline is tested on nerfstudio version 1.1.5, so we recommend installing that with `pip install nerfstudio==1.1.5`)
 - Install required packages for baseline with `pip install -r requirements.txt`
 - Follow instructions [here](https://github.com/cvg/Hierarchical-Localization?tab=readme-ov-file#installation) to install `hloc`
+- Download contest data (`inputs` and possibly `ref` and `res` dirs) into some `root_datasets_dir` location (needed for Usage below).
 
 # Usage
-- `python baseline.py --help`
+- (Example to run View Synthesis stage on dev dataset, `t01_v09_s00_r01_ImageDensity_WACV_dev_A01`)
+    - `python --root_datasets_dir /PATH/TO/DIR/WITH/INPUTS --stage view_synthesis --dataset_name t01_v09_s00_r01_ImageDensity_WACV_dev_A01`
+    - ^This should output results into a `res` folder inside the `root_datasets_dir`
+- See `python baseline.py --help` for more information.
 
 
 # Submission to Codabench
