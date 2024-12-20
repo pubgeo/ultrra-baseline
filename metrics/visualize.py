@@ -1,10 +1,11 @@
+import os
 import sys
 import matplotlib.pyplot as plt
 import numpy as np
 import json
 from pathlib import Path
 
-def boxplot(data, xlabel, ylabel, ylim, title, xticks=None, log_plot=False):
+def boxplot(data, xlabel, ylabel, ylim, title, xticks=None, log_plot=False, output_fname=None):
     fig, ax = plt.subplots()
     bp = ax.boxplot(data)
     for i, d in enumerate(data):
@@ -21,14 +22,18 @@ def boxplot(data, xlabel, ylabel, ylim, title, xticks=None, log_plot=False):
     plt.ylabel(ylabel)
     plt.ylim(ylim)
     plt.title(title)
-    plt.show()
+    if output_path is not None:
+        plt.savefig(output_fname)
+    else:
+        plt.show()
 
-def plot_ultrra_results(json_path):
+def plot_ultrra_results(json_path, output_path):
     # read JSON outputs
     with open(json_path) as f:
         results = json.load(f)
     # plot camera calibration results
     if 'camera_calibration' in results:
+        output_fname = os.path.join(output_path, 'camera_calibration_results.png')
         keys = list(results['camera_calibration'].keys())
         print(keys)
         data = []
@@ -39,9 +44,10 @@ def plot_ultrra_results(json_path):
         data[2], data[3] = data[3], data[2]
         xticks = ['', 'Single\nCamera', 'Multiple\nCameras', 'Varying\nAltitudes', 'Reconstructed\nArea']
         ylim = [0.01,1000.0]
-        boxplot(data, 'Themes', 'Spherical Error 90% (meters)', ylim, 'Camera Calibration Results', xticks=xticks, log_plot=True)
+        boxplot(data, 'Themes', 'Spherical Error (meters)', ylim, 'Camera Calibration', xticks=xticks, log_plot=True, output_fname=output_fname)
     # plot view synthesis results
     if 'view_synthesis' in results:
+        output_fname = os.path.join(output_path, 'view_synthesis_results.png')
         keys = list(results['view_synthesis'].keys())
         print(keys)
         data = []
@@ -52,7 +58,7 @@ def plot_ultrra_results(json_path):
         data[2], data[3] = data[3], data[2]
         xticks = ['', 'Single\nCamera', 'Multiple\nCameras', 'Varying\nAltitudes', 'Reconstructed\nArea']
         ylim = [0,1]
-        boxplot(data, 'Themes', 'DreamSim Scores', ylim, 'View Synthesis Results', xticks=xticks)
+        boxplot(data, 'Themes', 'DreamSim Score', ylim, 'View Synthesis', xticks=xticks, output_fname=output_fname)
 
 def plot_test():
     data1 = np.random.normal(100, 10, 200)/600.
@@ -67,5 +73,6 @@ def plot_test():
 # test
 if __name__ == "__main__":
     json_path = sys.argv[1]
-    plot_ultrra_results(json_path)
+    output_path = sys.argv[2]
+    plot_ultrra_results(json_path, output_path)
 

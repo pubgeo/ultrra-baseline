@@ -57,12 +57,12 @@ def load_images(path):
     return {Path(img_path).name : Image.open(img_path) for img_path in all_jpgs_paths}
 
 
-def collect_successful_metadata(predicted_metadata_path):
+def collect_metadata(predicted_metadata_path):
     """
-    Collects all the metadata where we had success as True and returns them as a list
+    Collects all the metadata and a list of indices for images not labeled successful
 
     :param predicted_metadata_path: The location of all the predicted metadatas
-    :return: All the metadata loaded as dictionaries that had the "success" field as true, the indices we removed 
+    :return: All the metadata loaded as dictionaries and indices where "success" field is false to ignore in procrustes
     """
     all_metadata = load_metadata(predicted_metadata_path)
     failed_indices = [i for i, metadata in enumerate(all_metadata) if not metadata.get("success")]
@@ -104,12 +104,26 @@ def evaluate_camera_calibration(submission_path, reference_path):
     :return: A list of RMSEs between valid submissions
     """
     # returns the metadata as well as the indices of the ones that were not successful
-    submission_metadata, failed_indices = collect_successful_metadata(submission_path)
+    submission_metadata, failed_indices = collect_metadata(submission_path)
     submission_coordinates = extract_coordinates(submission_metadata)
 
     reference_metadata = load_metadata(reference_path)
     reference_coordinates = extract_coordinates(reference_metadata, keys=("lat", "lon", "alt"), under="extrinsics")
     assert len(submission_coordinates) == len(reference_coordinates), "The count of reference and submission coordinates do not match!"
+
+    # if reference JSON metadata indicates inaccurate camera locations, then do not use for procrustes fit or camera location evaluation
+    # this is not an issue for ULTRRA Challenge datasets
+    # it is an issue for some of the WRIVA challenge datasets for anyone converting those to run with ULTRRA solutions and metrics
+    keepers = []
+    for params in reference_metadata:
+        keep = True
+        if "geolocation" in params:
+            if params["geolocation"] != "gcp" and params["geolocation"] != "rtk" and params["geolocation"] != "synthetic":
+                keep = False
+        keepers.append(keep)
+    reference_coordinates = reference_coordinates[keepers]
+    submission_coordinates = submission_coordinates[keepers]
+
     # call geodetic_to_enu to convert our lat/lon/alt to xyz, collect into numpy array like above
     lat_origin, lon_origin, alt_origin = reference_coordinates[0]
     reference_coordinates = np.array([
@@ -129,7 +143,7 @@ def evaluate_camera_calibration(submission_path, reference_path):
     return rmses
 
 
-def evaluate_view_synthesis(submission_path, reference_path):
+def evaluate_view_synthesis(submission_path, reference_path, crop = False):
     """
     Evaluates view synthesis competition vector, given the submission and reference path.
     First loads all reference and submission images. We then calculate dreamsim on each image pair. 
@@ -147,18 +161,44 @@ def evaluate_view_synthesis(submission_path, reference_path):
         submission_image = submissions.get(name)
         if not submission_image: 
             raise KeyError(f"No such image named {name} in submissions. Please ensure you submitted an image named {name}")
-        
-        scores.append(evaluate_image(reference_image, submission_image))
-
+        if crop == False:
+            # default is to run on whole image
+            scores.append(evaluate_image(reference_image, submission_image))
+        else:
+            # alternative is to run on crops and average
+            # this is intended to increase sensitivity to quality of background features in the image
+            h, w = reference_image.size
+            box = (0, 0, int(w/2.), int(h/2.))
+            score1 = evaluate_image(reference_image.crop(box), submission_image.crop(box))
+            box = (0, int(h/2), int(w/2.), h)
+            score2 = evaluate_image(reference_image.crop(box), submission_image.crop(box))
+            box = (int(w/2.), 0, w, int(h/2.))
+            score3 = evaluate_image(reference_image.crop(box), submission_image.crop(box))
+            box = (int(w/2.), int(h/2.), w, h)
+            score4 = evaluate_image(reference_image.crop(box), submission_image.crop(box))
+            box = (int(h/4.), int(w/4.), int(h*3/4.), int(w*3/4.))
+            score5 = evaluate_image(reference_image.crop(box), submission_image.crop(box))
+            score = (score1 + score2 + score3 + score4 + score5)/5.0
+            scores.append(score)
     return scores
-
 
 if __name__ == "__main__":
     # define input and output paths
     start = time.time()
     input_path = sys.argv[1]
     output_path = sys.argv[2]
-    submission_path = os.path.join(input_path, 'res')
+    # optionally define other inputs
+    try:
+        res_label = sys.argv[3]
+        crop = sys.argv[4].lower() == "true"
+    except:
+        res_label = 'res'
+        crop = False
+
+    if not os.path.exists(output_path):
+        os.makedirs(output_path)
+#    submission_path = os.path.join(input_path, 'res')
+    submission_path = os.path.join(input_path, res_label)
     reference_path = os.path.join(input_path, 'ref')
     # retrieve full path to camera calibration submission and reference
     calibration_reference_path = os.path.join(reference_path, 'camera_calibration')
@@ -174,11 +214,11 @@ if __name__ == "__main__":
         dataset_reference_calibration_path = os.path.join(calibration_reference_path, dataset)
         dataset_submission_calibration_path = os.path.join(calibration_submission_path, dataset)
         dataset_result = evaluate_camera_calibration(dataset_submission_calibration_path, dataset_reference_calibration_path)
-        dataset_result_percentile = np.percentile(dataset_result, 90)
         # We save as a "short" name for each dataset (ie, t01, t02...)
         per_image_results['camera_calibration'][dataset] = list(dataset_result)
         short_dataset_name = dataset.split('_')[0]
-        summary_results[f'{short_dataset_name}_se90'] = dataset_result_percentile
+        summary_results[f'{short_dataset_name}_se90'] = np.percentile(dataset_result, 90)
+        summary_results[f'{short_dataset_name}_se50'] = np.percentile(dataset_result, 50)
 
     view_synth_reference_path = os.path.join(reference_path, 'view_synthesis')
     view_synth_submission_path = os.path.join(submission_path, 'view_synthesis')
@@ -190,7 +230,7 @@ if __name__ == "__main__":
         dataset_submission_view_synth_path = os.path.join(view_synth_submission_path, dataset)
         # If dataset calculation errors for view synthesis due to missing images, we catch and output the max for dsim (1)
         try:
-            dataset_result = evaluate_view_synthesis(dataset_submission_view_synth_path, dataset_reference_view_synth_path)
+            dataset_result = evaluate_view_synthesis(dataset_submission_view_synth_path, dataset_reference_view_synth_path, crop=crop)
         except Exception:
             print(f"Dataset {dataset} errored out. Score will be max [1.0] for this dataset.")
             print(traceback.format_exc())
@@ -211,5 +251,4 @@ if __name__ == "__main__":
     fid.close()
     end = time.time()
     print(f'Finished. Time to complete: {end - start} seconds.')
-
 
