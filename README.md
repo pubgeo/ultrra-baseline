@@ -10,6 +10,7 @@
     - `python --root_datasets_dir /PATH/TO/DIR/WITH/INPUTS --stage view_synthesis --dataset_name t01_v09_s00_r01_ImageDensity_WACV_dev_A01`
     - ^This should output results into a `res` folder inside the `root_datasets_dir`
 - See `python baseline.py --help` for more information.
+- Example run shell scripts are provided.
 
 
 # Submission to Codabench
