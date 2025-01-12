@@ -68,7 +68,6 @@ def collect_metadata(predicted_metadata_path):
     failed_indices = [i for i, metadata in enumerate(all_metadata) if not metadata.get("success")]
     return all_metadata, failed_indices
 
-
 def extract_coordinates(metadata, keys=("x", "y", "z"), under=None):
     def get_values(d, keys, under):
         source = d.get(under, d) if under else d
@@ -121,8 +120,12 @@ def evaluate_camera_calibration(submission_path, reference_path):
             if params["geolocation"] != "gcp" and params["geolocation"] != "rtk" and params["geolocation"] != "synthetic":
                 keep = False
         keepers.append(keep)
+    if np.sum(keepers) == 0: return None
     reference_coordinates = reference_coordinates[keepers]
     submission_coordinates = submission_coordinates[keepers]
+    failed = np.array(np.zeros(len(submission_metadata)).astype(bool))
+    failed[failed_indices] = True
+    failed = failed[keepers]
 
     # call geodetic_to_enu to convert our lat/lon/alt to xyz, collect into numpy array like above
     lat_origin, lon_origin, alt_origin = reference_coordinates[0]
@@ -130,11 +133,31 @@ def evaluate_camera_calibration(submission_path, reference_path):
         geodetic_to_enu(lat, lon, alt, lat_origin, lon_origin, alt_origin) 
         for lat, lon, alt in reference_coordinates
     ])
+
     # Get reduced list of coordinates for procrustes fit (and only for fit)
-    filtered_reference_coordinates = np.array([coords for i, coords in enumerate(reference_coordinates) if i not in failed_indices])
-    filtered_submission_coordinates = np.array([coords for i, coords in enumerate(submission_coordinates) if i not in failed_indices])
-    # Calculate transforms with procrustes         
-    disparity, transform = procrustes(filtered_reference_coordinates, filtered_submission_coordinates)
+#    filtered_reference_coordinates = np.array([coords for i, coords in enumerate(reference_coordinates) if i not in failed_indices])
+#    filtered_submission_coordinates = np.array([coords for i, coords in enumerate(submission_coordinates) if i not in failed_indices])
+    filtered_reference_coordinates = []
+    filtered_submission_coordinates = []
+    for ndx in range(len(failed)):
+        if not failed[ndx]:
+            filtered_reference_coordinates.append(reference_coordinates[ndx])
+            filtered_submission_coordinates.append(submission_coordinates[ndx])
+    filtered_reference_coordinates = np.array(filtered_reference_coordinates)
+    filtered_submission_coordinates = np.array(filtered_submission_coordinates)
+
+    print("len(filtered_reference_coordinates):", len(filtered_reference_coordinates))
+    print("len(filtered_submission_coordinates):", len(filtered_submission_coordinates))
+
+    if len(filtered_reference_coordinates) < 3:
+        return None
+
+    # Calculate transforms with procrustes   
+    try:     
+        disparity, transform = procrustes(filtered_reference_coordinates, filtered_submission_coordinates)
+    except Exception as err:
+        print("Procrustes failed. Returning None.")
+        return None
 
     # Convert submission coordinates to world coordinates
     submission_coordinates = transform["scale"] * submission_coordinates @ transform["rotation"] + transform["translation"]
@@ -183,21 +206,34 @@ def evaluate_view_synthesis(submission_path, reference_path, crop = False):
     return scores
 
 if __name__ == "__main__":
-    # define input and output paths
+    # define input and output paths for leaderboard runs
     start = time.time()
     input_path = sys.argv[1]
     output_path = sys.argv[2]
-    # optionally define other inputs
+    # optionally define other inputs for command line runs
     try:
+        # results path basename
         res_label = sys.argv[3]
+    except:
+        # must be "res" for CodaBench leaderboard
+        res_label = 'res'
+    try:
+        # option to average DreamSim metrics for multiple image crops
+        # to increase sensitivity to background image quality
         crop = sys.argv[4].lower() == "true"
     except:
-        res_label = 'res'
-        crop = False
+        crop = False # consider if we should use this for test phase leaderboard evaluation
+    try:
+        # if running WRIVA datasets, use extended version of short dataset names
+        # because there are a lot of vectors and steps for each theme
+        long = sys.argv[5].lower() == "true"
+    except:
+        # must be False for CodaBench leaderboard
+        long = False
 
+    # identify submission and reference paths for evaluation
     if not os.path.exists(output_path):
         os.makedirs(output_path)
-#    submission_path = os.path.join(input_path, 'res')
     submission_path = os.path.join(input_path, res_label)
     reference_path = os.path.join(input_path, 'ref')
     # retrieve full path to camera calibration submission and reference
@@ -214,11 +250,33 @@ if __name__ == "__main__":
         dataset_reference_calibration_path = os.path.join(calibration_reference_path, dataset)
         dataset_submission_calibration_path = os.path.join(calibration_submission_path, dataset)
         dataset_result = evaluate_camera_calibration(dataset_submission_calibration_path, dataset_reference_calibration_path)
+        if dataset_result is None:
+            count = 0
+            all_json_paths = sglob(os.path.join(dataset_reference_calibration_path, "*.json"))
+            for json_path in all_json_paths:
+                with open(json_path, 'r') as f:
+                    params = json.load(f)
+                    if params["geolocation"] == "gcp" or params["geolocation"] == "rtk" or params["geolocation"] == "synthetic":
+                        count = count + 1
+            if count > 0:
+                dataset_result = list(np.ones(count) * np.inf)
+                per_image_results['camera_calibration'][dataset] = list(dataset_result)
+            else:
+                dataset_result = None
+                per_image_results['camera_calibration'][dataset] = None
+        else:
+            per_image_results['camera_calibration'][dataset] = list(dataset_result)
         # We save as a "short" name for each dataset (ie, t01, t02...)
-        per_image_results['camera_calibration'][dataset] = list(dataset_result)
+        # if using long version of short name, then add vector and step
+        # the ULTRRA Challenge datasets only have one dataset per theme
+        # the WRIVA datasets have multiple vectors and steps
         short_dataset_name = dataset.split('_')[0]
-        summary_results[f'{short_dataset_name}_se90'] = np.percentile(dataset_result, 90)
-        summary_results[f'{short_dataset_name}_se50'] = np.percentile(dataset_result, 50)
+        if long:
+            short_dataset_name = short_dataset_name + '_' + dataset.split('_')[1] + '_' + dataset.split('_')[2]
+        if dataset_result is None:
+            summary_results[f'{short_dataset_name}_se90'] = None
+        else:
+            summary_results[f'{short_dataset_name}_se90'] = np.percentile(dataset_result, 90)
 
     view_synth_reference_path = os.path.join(reference_path, 'view_synthesis')
     view_synth_submission_path = os.path.join(submission_path, 'view_synthesis')
@@ -234,10 +292,12 @@ if __name__ == "__main__":
         except Exception:
             print(f"Dataset {dataset} errored out. Score will be max [1.0] for this dataset.")
             print(traceback.format_exc())
-            dataset_result = [1.0]
-
+            all_jpgs_paths = sglob(os.path.join(dataset_reference_view_synth_path, "*.jpg"))
+            dataset_result = list(np.ones(len(all_jpgs_paths)))
         per_image_results['view_synthesis'][dataset] = dataset_result
         short_dataset_name = dataset.split('_')[0]
+        if long:
+            short_dataset_name = short_dataset_name + '_' + dataset.split('_')[1] + '_' + dataset.split('_')[2]
         summary_results[f'{short_dataset_name}_dreamsim'] = np.mean(dataset_result)
 
     with open(os.path.join(output_path, "per_frame_results.json"), "w") as outfile:

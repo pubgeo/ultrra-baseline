@@ -46,7 +46,7 @@ def baseline(args):
     # else this is done so skip
     run_dir = args.root_datasets_dir / args.output_name / "run" / args.stage / args.dataset_name
     if run_dir.exists():
-        if len(run_dir.glob("*")) == 0:
+        if len(list(res_dir.glob("*"))) == 0:
             shutil.rmtree(run_dir)
         else:
             print(f"Run directory already exists so skipping: {run_dir}")
@@ -78,7 +78,7 @@ def baseline(args):
             matcher_conf, sfm_pairs, feature_conf["output"], outputs
         )
         model = reconstruction.main(sfm_dir, train_images_dir, sfm_pairs, feature_path, 
-            match_path, verbose=False, camera_mode='PER_IMAGE', image_options=image_options, mapper_options=mapper_options,
+            match_path, verbose=True, camera_mode='PER_IMAGE', image_options=image_options, mapper_options=mapper_options,
             min_match_score = 0.1, skip_geometric_verification=False)
         cameras, images, points3D = read_model(arb_colmap_dir / "colmap" / "sparse" / "0", ext=".bin")
         write_model(cameras, images, points3D, arb_colmap_dir / "colmap" / "sparse" / "0", ext=".txt")

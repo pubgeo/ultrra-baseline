@@ -22,10 +22,11 @@ def boxplot(data, xlabel, ylabel, ylim, title, xticks=None, log_plot=False, outp
     plt.ylabel(ylabel)
     plt.ylim(ylim)
     plt.title(title)
-    if output_path is not None:
+    if output_fname is not None:
         plt.savefig(output_fname)
     else:
         plt.show()
+    plt.close(fig)
 
 def plot_ultrra_results(json_path, output_path):
     # read JSON outputs
