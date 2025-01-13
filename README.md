@@ -12,6 +12,12 @@
 - See `python baseline.py --help` for more information.
 - Example run shell scripts are provided.
 
+# Coordinate Systems Alignment
+- During the view synthesis stage, the ground truth camera locations are provided in geodetic coordinates (latitude, longitude, and altitude) as specified in the metadata JSON file. These geodetic coordinates can be converted to the world reference East-North-Up (ENU) Cartesian coordinate system, represented by `xEast`, `yNorth`, and `zUp`, using the `geodetic2enu` function.
+- For evaluation purposes, the reconstructed coordinates must be aligned with the ENU world coordinate system. The [baseline code](https://github.com/pubgeo/ultrra-baseline/blob/main/baseline.py) provides an example demonstrating how to align reconstructed local coordinates to the ENU coordinates.
+    - **COLMAP Reconstructions**: COLMAP may reconstruct multiple models when not all images are registered into a single model. These reconstructed models (`arb_colmap_models`) are stored in the arb_colmap_dir, and the camera locations in local coordinates are saved in `successful_arb_colmap_cart_dicts`.  
+    - **Coordinate Alignment**: For each model in arb_colmap_models, a transformation is calculated between the local camera locations and their corresponding ENU world coordinates using the `Procrustes` function. The models are then transformed to the ENU coordinate system using these calculated transformations and saved as `transformed_arb_colmap_models`. 
+    - **Model Merging**: Once transformed, the aligned models can be merged into a single model using the `merge_models` function
 
 # Submission to Codabench
 - In order to create your zip file that you upload to codabench, please organize your folders into a specific format, otherwise the scoring program will error. The format expected is:
